@@ -10,8 +10,7 @@ import { useLanguage } from "@/contexts/language-context"
 
 export default function TellUsAboutPlacePage() {
   const { t } = useLanguage()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [selectedPropertyType, setSelectedPropertyType] = useState("")
+  const [currentStep, setCurrentStep] = useState(1) // Start from step 1 (location), since property type is handled in /host/setup
   const [guestCounts, setGuestCounts] = useState({
     guests: 1,
     bedrooms: 1,
@@ -24,54 +23,15 @@ export default function TellUsAboutPlacePage() {
     city: "",
     province: "",
   })
-
-  const totalSteps = 4
-  const progress = (currentStep / totalSteps) * 100
-
-  const propertyTypes = [
-    {
-      id: "apartment",
-      title: t("apartment"),
-      description: "A place within a multi-unit residential building",
-      icon: Building,
-    },
-    {
-      id: "house",
-      title: t("house"),
-      description: "A residential building, usually for one family",
-      icon: Home,
-    },
-    {
-      id: "secondary-unit",
-      title: t("secondaryUnit"),
-      description: "A private unit that's part of a larger property",
-      icon: Home,
-    },
-    {
-      id: "unique-space",
-      title: t("uniqueSpace"),
-      description: "A space that's not typically used for accommodation",
-      icon: TreePine,
-    },
-    {
-      id: "bed-breakfast",
-      title: t("bedAndBreakfast"),
-      description: "A small lodging establishment with breakfast included",
-      icon: Coffee,
-    },
-    {
-      id: "boutique-hotel",
-      title: t("boutique"),
-      description: "A small, stylish hotel with unique character",
-      icon: Hotel,
-    },
-  ]
+    const totalSteps = 12 // Total internal steps across all pages: 1 + 3 + 4 + 3 + 1 = 12
+  const currentGlobalStep = 1 + currentStep // Dynamic global step: 2, 3, 4 based on internal step
+  const progress = (currentGlobalStep / totalSteps) * 100
 
   const handleNext = () => {
-    if (currentStep < totalSteps) {
+    if (currentStep < 3) { // Internal steps within this page (1-3: location, basics, amenities)
       setCurrentStep(currentStep + 1)
     } else {
-      // Navigate to next major step
+      // Navigate to next page in setup flow
       window.location.href = "/host/setup/standout"
     }
   }
@@ -90,46 +50,9 @@ export default function TellUsAboutPlacePage() {
       [key]: Math.max(1, prev[key] + (increment ? 1 : -1)),
     }))
   }
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-8">
-            <div className="text-center">
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{t("whichDescribes")}</h1>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-              {propertyTypes.map((type) => {
-                const IconComponent = type.icon
-                return (
-                  <Card
-                    key={type.id}
-                    className={`cursor-pointer transition-all hover:shadow-lg ${
-                      selectedPropertyType === type.id ? "ring-2 ring-purple-600 bg-purple-50" : "hover:shadow-md"
-                    }`}
-                    onClick={() => setSelectedPropertyType(type.id)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0">
-                          <IconComponent className="w-8 h-8 text-gray-700" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg mb-2">{type.title}</h3>
-                          <p className="text-gray-600 text-sm">{type.description}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          </div>
-        )
-
-      case 2:
         return (
           <div className="space-y-8">
             <div className="text-center">
@@ -194,7 +117,7 @@ export default function TellUsAboutPlacePage() {
           </div>
         )
 
-      case 3:
+      case 2:
         return (
           <div className="space-y-8">
             <div className="text-center">
@@ -243,7 +166,7 @@ export default function TellUsAboutPlacePage() {
           </div>
         )
 
-      case 4:
+      case 3:
         return (
           <div className="space-y-8">
             <div className="text-center">
@@ -252,15 +175,6 @@ export default function TellUsAboutPlacePage() {
             </div>
 
             <div className="max-w-2xl mx-auto space-y-6">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-4">Property Type</h3>
-                  <p className="text-gray-600">
-                    {propertyTypes.find((type) => type.id === selectedPropertyType)?.title || "Not selected"}
-                  </p>
-                </CardContent>
-              </Card>
-
               <Card>
                 <CardContent className="p-6">
                   <h3 className="font-semibold mb-4">Location</h3>
@@ -313,7 +227,7 @@ export default function TellUsAboutPlacePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">
-              {t("stepOf").replace("{current}", currentStep.toString()).replace("{total}", totalSteps.toString())}
+              Step {currentGlobalStep} of {totalSteps}
             </span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -332,17 +246,14 @@ export default function TellUsAboutPlacePage() {
             <Button variant="outline" onClick={handleBack} className="rounded-full px-6">
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t("back")}
-            </Button>
-
-            <Button
+            </Button>            <Button
               onClick={handleNext}
               disabled={
-                (currentStep === 1 && !selectedPropertyType) ||
-                (currentStep === 2 && (!location.address || !location.city))
+                (currentStep === 1 && (!location.address || !location.city))
               }
               className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
             >
-              {currentStep === totalSteps ? "Continue to Make it Stand Out" : t("next")}
+              {currentStep === 3 ? "Continue to Make it Stand Out" : t("next")}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>

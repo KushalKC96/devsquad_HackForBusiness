@@ -25,12 +25,12 @@ export default function GetReadyForGuestsPage() {
     minStay: "1",
     maxStay: "30",
   })
-
-  const totalSteps = 3
-  const progress = (currentStep / totalSteps) * 100
-
+  
+  const totalSteps = 12 // Total internal steps across all pages: 1 + 3 + 4 + 3 + 1 = 12
+  const currentGlobalStep = 8 + currentStep // Dynamic global step: 9, 10, 11 based on internal step
+  const progress = (currentGlobalStep / totalSteps) * 100
   const handleNext = () => {
-    if (currentStep < totalSteps) {
+    if (currentStep < 3) { // Internal steps within this page (1-3)
       setCurrentStep(currentStep + 1)
     } else {
       window.location.href = "/host/setup/publish"
@@ -297,7 +297,7 @@ export default function GetReadyForGuestsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">
-              Step {currentStep} of {totalSteps}
+              Step {currentGlobalStep} of {totalSteps}
             </span>
           </div>
           <Progress value={progress} className="h-2" />

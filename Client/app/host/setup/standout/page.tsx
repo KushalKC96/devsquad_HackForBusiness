@@ -38,9 +38,10 @@ export default function MakeItStandOutPage() {
     cleaningFee: "",
     securityDeposit: "",
   })
-
-  const totalSteps = 4
-  const progress = (currentStep / totalSteps) * 100
+  
+  const totalSteps = 12 // Total internal steps across all pages: 1 + 3 + 4 + 3 + 1 = 12
+  const currentGlobalStep = 4 + currentStep // Dynamic global step: 5, 6, 7, 8 based on internal step
+  const progress = (currentGlobalStep / totalSteps) * 100
 
   const amenities = [
     { id: "wifi", label: "WiFi", icon: Wifi },
@@ -49,11 +50,11 @@ export default function MakeItStandOutPage() {
     { id: "pool", label: "Pool", icon: Waves },
     { id: "ac", label: "Air conditioning", icon: Snowflake },
     { id: "tv", label: "TV", icon: Tv },
-    { id: "gym", label: "Gym", icon: Dumbbell },
-    { id: "breakfast", label: "Breakfast", icon: Coffee },
+    { id: "gym", label: "Gym", icon: Dumbbell },    { id: "breakfast", label: "Breakfast", icon: Coffee },
   ]
+  
   const handleNext = () => {
-    if (currentStep < totalSteps) {
+    if (currentStep < 4) { // Internal steps within this page (1-4)
       setCurrentStep(currentStep + 1)
     } else {
       // Save all setup data to localStorage before moving to next page
@@ -384,7 +385,7 @@ export default function MakeItStandOutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">
-              Step {currentStep} of {totalSteps}
+              Step {currentGlobalStep} of {totalSteps}
             </span>
           </div>
           <Progress value={progress} className="h-2" />

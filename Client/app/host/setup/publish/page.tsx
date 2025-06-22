@@ -104,7 +104,7 @@ export default function PublishListingPage() {
             <Link href="/" className="text-2xl font-bold text-gray-900">
               Kostra
             </Link>
-            <div className="text-sm text-gray-600">Publish your listing</div>
+            <div className="text-sm text-gray-600">Step 12 of 12 - Publish your listing</div>
           </div>
         </div>
       </nav>
