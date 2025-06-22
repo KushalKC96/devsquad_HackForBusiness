@@ -239,25 +239,27 @@ export default function TellUsAboutPlacePage() {
         {/* Main Content */}
         <div className="py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">{renderStepContent()}</div>
-        </div>
-
-        {/* Navigation Buttons */}
+        </div>        {/* Navigation Buttons */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex justify-between">
               <Button variant="outline" onClick={handleBack} className="rounded-full px-6">
-                <ArrowLeft className="w-4 h-4
-              onClick={handleNext}
-              disabled={
-                (currentStep === 1 && (!location.address || !location.city))
-              }
-              className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
-            >
-              {currentStep === 3 ? "Continue to Make it Stand Out" : t("next")}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>        </div>
-      </div>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {t("back")}
+              </Button>
+              <Button
+                onClick={handleNext}
+                disabled={
+                  (currentStep === 1 && (!location.address || !location.city))
+                }
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
+              >
+                {currentStep === 3 ? "Continue to Make it Stand Out" : t("next")}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </AuthGuard>
   )

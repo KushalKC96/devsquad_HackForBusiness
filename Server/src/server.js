@@ -13,6 +13,7 @@ const userRoutes = require('./routes/users');
 const bookingRoutes = require('./routes/bookings');
 const reviewRoutes = require('./routes/reviews');
 const paymentRoutes = require('./routes/payments');
+const contractRoutes = require('./routes/contracts');
 const companyRoutes = require('./routes/company');
 const careerRoutes = require('./routes/careers');
 const referralRoutes = require('./routes/referrals');
@@ -40,9 +41,12 @@ app.use(limiter);
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:3000',
-    'http://localhost:3001'
+    'http://localhost:3001',
+    'http://localhost:3002'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -85,6 +89,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/contracts', contractRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/careers', careerRoutes);
 app.use('/api/referrals', referralRoutes);

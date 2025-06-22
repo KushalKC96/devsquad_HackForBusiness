@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Complete Host Setup Flow</title>
+</head>
+<body>
+    <h1>Test Complete Host Setup Flow</h1>
+    <div id="status">Ready to test...</div>
+    
+    <button onclick="runFullTest()">Run Full Test (Login + Setup Data + Publish)</button>
+    <button onclick="testLogin()">Test Login Only</button>
+    <button onclick="setupDataAndPublish()">Setup Data & Publish (assumes logged in)</button>
+    
+    <div id="logs" style="margin-top: 20px; padding: 10px; background: #f5f5f5; white-space: pre-wrap;"></div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:5000';
+        
+        function log(message) {
+            const logs = document.getElementById('logs');
+            logs.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        function setStatus(message) {
+            document.getElementById('status').textContent = message;
+            log(message);
+        }
+        
+        async function testLogin() {
+            try {
+                setStatus('Attempting to login...');
+                
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'john@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user_data', JSON.stringify(data.data.user));
+                    setStatus('Login successful! Token saved.');
+                    log('User data: ' + JSON.stringify(data.data.user, null, 2));
+                    return true;
+                } else {
+                    setStatus('Login failed: ' + data.message);
+                    return false;
+                }
+            } catch (error) {
+                setStatus('Login error: ' + error.message);
+                return false;
+            }
+        }
+        
+        function setupSampleData() {
+            setStatus('Setting up sample data...');
+            
+            // Property type (from /host/setup)
+            localStorage.setItem('host_setup_property_type', 'apartment');
+            
+            // Place data (from /host/setup/place)
+            const placeData = {
+                location: {
+                    address: "123 Test Street, Thamel",
+                    city: "Kathmandu",
+                    state: "Bagmati",
+                    country: "Nepal",
+                    zipCode: "44600"
+                },
+                guestCounts: {
+                    guests: 4,
+                    bedrooms: 2,
+                    beds: 2,
+                    bathrooms: 1
+                }
+            };
+            localStorage.setItem('host_setup_place_data', JSON.stringify(placeData));
+            
+            // Standout data (from /host/setup/standout)
+            const standoutData = {
+                photos: ["/placeholder.svg"],
+                title: "Beautiful Test Apartment in Thamel",
+                description: "A lovely apartment perfect for testing the publish functionality. Located in the heart of Thamel, Kathmandu with modern amenities and traditional charm.",
+                selectedAmenities: ["WiFi", "Kitchen", "Parking", "Air Conditioning"],
+                pricing: {
+                    basePrice: "2500",
+                    cleaningFee: "500",
+                    securityDeposit: "1000"
+                }
+            };
+            localStorage.setItem('host_setup_standout_data', JSON.stringify(standoutData));
+            
+            log('Sample data setup complete!');
+            return true;
+        }
+        
+        async function testPublish() {
+            try {
+                setStatus('Testing publish functionality...');
+                
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    setStatus('No auth token found. Please login first.');
+                    return false;
+                }
+                
+                // Get setup data
+                const propertyType = localStorage.getItem('host_setup_property_type');
+                const placeData = JSON.parse(localStorage.getItem('host_setup_place_data') || '{}');
+                const standoutData = JSON.parse(localStorage.getItem('host_setup_standout_data') || '{}');
+                
+                // Prepare property data for API
+                const propertyData = {
+                    title: standoutData.title || 'Untitled Property',
+                    description: standoutData.description || 'No description provided',
+                    type: propertyType || 'apartment',
+                    address: placeData.location?.address || '',
+                    city: placeData.location?.city || '',
+                    state: placeData.location?.state || '',
+                    country: placeData.location?.country || 'Nepal',
+                    zipCode: placeData.location?.zipCode || '',
+                    price: parseFloat(standoutData.pricing?.basePrice || '1000'),
+                    currency: 'NPR',
+                    bedrooms: placeData.guestCounts?.bedrooms || 1,
+                    bathrooms: placeData.guestCounts?.bathrooms || 1,
+                    maxGuests: placeData.guestCounts?.guests || 1,
+                    amenities: standoutData.selectedAmenities || [],
+                    images: standoutData.photos || [],
+                    availability: true
+                };
+                
+                log('Publishing property with data: ' + JSON.stringify(propertyData, null, 2));
+                
+                const response = await fetch(`${API_BASE_URL}/api/properties`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(propertyData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    setStatus('Property published successfully!');
+                    log('Property created: ' + JSON.stringify(result.data, null, 2));
+                    
+                    // Clear localStorage data after successful creation
+                    localStorage.removeItem('host_setup_property_type');
+                    localStorage.removeItem('host_setup_place_data');
+                    localStorage.removeItem('host_setup_standout_data');
+                    
+                    return true;
+                } else {
+                    setStatus('Publish failed: ' + result.message);
+                    log('Error details: ' + JSON.stringify(result, null, 2));
+                    return false;
+                }
+            } catch (error) {
+                setStatus('Publish error: ' + error.message);
+                log('Exception: ' + error.toString());
+                return false;
+            }
+        }
+        
+        async function setupDataAndPublish() {
+            if (setupSampleData()) {
+                await testPublish();
+            }
+        }
+        
+        async function runFullTest() {
+            log('=== Starting Full Test ===');
+            
+            // Step 1: Login
+            const loginSuccess = await testLogin();
+            if (!loginSuccess) {
+                setStatus('Test failed at login step');
+                return;
+            }
+            
+            // Step 2: Setup data and publish
+            setTimeout(async () => {
+                await setupDataAndPublish();
+                log('=== Test Complete ===');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

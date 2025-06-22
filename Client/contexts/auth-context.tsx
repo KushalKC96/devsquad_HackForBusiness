@@ -41,36 +41,48 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Check for existing token on mount
+  const [loading, setLoading] = useState(true);  // Check for existing token on mount
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      // Validate token and get user profile
-      authAPI.getProfile()
-        .then((response) => {
-          setUser(response.data.user);
-        })
-        .catch((error) => {
-          console.error('Token validation failed:', error);
-          localStorage.removeItem('auth_token');
-        })
-        .finally(() => {
+    const checkAuth = async () => {
+      try {
+        // Only run on client side
+        if (typeof window === 'undefined') {
           setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
+          return;
+        }
+
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          // Validate token and get user profile
+          const response = await authAPI.getProfile();
+          setUser(response.data.user);
+        }
+      } catch (error) {
+        console.error('Token validation failed:', error);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Add a small delay to ensure we're on client side
+    const timer = setTimeout(() => {
+      checkAuth();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await authAPI.login({ email, password });
-      const { user: userData, token } = response.data;
+      const response = await authAPI.login({ email, password });      const { user: userData, token } = response.data;
       
       // Store token in localStorage
-      localStorage.setItem('auth_token', token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', token);
+      }
       
       // Update user state
       setUser(userData);
@@ -89,11 +101,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role?: 'guest' | 'host';
   }) => {
     try {
-      const response = await authAPI.register(userData);
-      const { user: userInfo, token } = response.data;
+      const response = await authAPI.register(userData);      const { user: userInfo, token } = response.data;
       
       // Store token in localStorage
-      localStorage.setItem('auth_token', token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', token);
+      }
       
       // Update user state
       setUser(userInfo);
@@ -102,9 +115,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error;
     }
   };
-
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+    }
     setUser(null);
   };
 

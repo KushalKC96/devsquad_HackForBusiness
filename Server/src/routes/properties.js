@@ -8,13 +8,13 @@ const router = express.Router();
 // Validation schemas
 const propertySchema = Joi.object({
   title: Joi.string().min(5).max(100).required(),
-  description: Joi.string().min(20).max(1000).required(),
+  description: Joi.string().min(10).max(1000).required(), // Reduced min length
   type: Joi.string().valid('apartment', 'house', 'villa', 'cabin', 'hotel').required(),
   address: Joi.string().required(),
   city: Joi.string().required(),
   state: Joi.string().required(),
   country: Joi.string().required(),
-  zipCode: Joi.string().required(),
+  zipCode: Joi.string().allow('').optional(), // Allow empty zipCode
   latitude: Joi.number().optional(),
   longitude: Joi.number().optional(),
   price: Joi.number().positive().required(),
@@ -87,13 +87,13 @@ router.get('/', async (req, res) => {
       .avg('rating as avg_rating')
       .count('* as review_count')
       .whereIn('property_id', propertyIds)
-      .groupBy('property_id');
-
-    // Merge ratings with properties
+      .groupBy('property_id');    // Merge ratings with properties
     const propertiesWithRatings = properties.map(property => {
       const rating = ratings.find(r => r.property_id === property.id);
       return {
         ...property,
+        amenities: typeof property.amenities === 'string' ? JSON.parse(property.amenities) : property.amenities,
+        images: typeof property.images === 'string' ? JSON.parse(property.images) : property.images,
         avgRating: rating ? parseFloat(rating.avg_rating).toFixed(1) : null,
         reviewCount: rating ? parseInt(rating.review_count) : 0
       };
@@ -164,13 +164,13 @@ router.get('/:id', async (req, res) => {
     // Calculate average rating
     const avgRating = reviews.length > 0 
       ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
-      : null;
-
-    res.json({
+      : null;    res.json({
       success: true,
       data: {
         property: {
           ...property,
+          amenities: typeof property.amenities === 'string' ? JSON.parse(property.amenities) : property.amenities,
+          images: typeof property.images === 'string' ? JSON.parse(property.images) : property.images,
           avgRating,
           reviewCount: reviews.length
         },
@@ -197,15 +197,23 @@ router.post('/', hostAuth, async (req, res) => {
         success: false,
         message: error.details[0].message
       });
-    }
-
-    const propertyData = {
+    }    const propertyData = {
       ...value,
       host_id: req.user.id,
       is_active: true,
       created_at: new Date(),
       updated_at: new Date()
     };
+
+    // Handle field name mapping between frontend and database
+    if (propertyData.zipCode) {
+      propertyData.zip_code = propertyData.zipCode;
+      delete propertyData.zipCode;
+    }
+    if (propertyData.maxGuests) {
+      propertyData.max_guests = propertyData.maxGuests;
+      delete propertyData.maxGuests;
+    }
 
     // Convert amenities array to JSON if provided
     if (propertyData.amenities) {

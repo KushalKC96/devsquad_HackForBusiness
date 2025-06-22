@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Publish - Setup Sample Data</title>
+</head>
+<body>
+    <h1>Test Publish Functionality</h1>
+    <p>This page will populate localStorage with sample host setup data and then redirect to the publish page.</p>
+    
+    <button onclick="setupSampleData()">Setup Sample Data & Go to Publish</button>
+    
+    <script>
+        function setupSampleData() {
+            // Property type (from /host/setup)
+            localStorage.setItem('host_setup_property_type', 'apartment');
+            
+            // Place data (from /host/setup/place)
+            const placeData = {
+                location: {
+                    address: "123 Sample Street",
+                    city: "Kathmandu",
+                    state: "Bagmati",
+                    country: "Nepal",
+                    zipCode: "44600"
+                },
+                guestCounts: {
+                    guests: 4,
+                    bedrooms: 2,
+                    beds: 2,
+                    bathrooms: 1
+                }
+            };
+            localStorage.setItem('host_setup_place_data', JSON.stringify(placeData));
+            
+            // Standout data (from /host/setup/standout)
+            const standoutData = {
+                photos: ["/placeholder.svg"],
+                title: "Beautiful Test Apartment in Kathmandu",
+                description: "A lovely apartment perfect for testing the publish functionality. Located in the heart of Kathmandu with modern amenities.",
+                selectedAmenities: ["WiFi", "Kitchen", "Parking", "Air Conditioning"],
+                pricing: {
+                    basePrice: "2500",
+                    cleaningFee: "500",
+                    securityDeposit: "1000"
+                }
+            };
+            localStorage.setItem('host_setup_standout_data', JSON.stringify(standoutData));
+            
+            alert('Sample data has been set! Redirecting to publish page...');
+            window.location.href = 'http://localhost:3000/host/setup/publish';
+        }
+    </script>
+</body>
+</html>

@@ -40,7 +40,7 @@ export default function ExplorePage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [priceRange, setPriceRange] = useState([1000, 10000])
+  const [priceRange, setPriceRange] = useState([5000, 60000])
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -118,7 +118,7 @@ export default function ExplorePage() {
   const clearAllFilters = () => {
     setSelectedAmenities([])
     setSelectedPropertyTypes([])
-    setPriceRange([1000, 10000])
+    setPriceRange([5000, 60000])
     setSearchQuery('')
   }
   const handleHostClick = (e: React.MouseEvent) => {
@@ -239,13 +239,12 @@ export default function ExplorePage() {
               {/* Price Range */}
               <div className="mb-8">
                 <h3 className="text-sm font-medium mb-4">Price Range</h3>
-                <div className="mb-4">
-                  <Slider
+                <div className="mb-4">                  <Slider
                     value={priceRange}
                     onValueChange={setPriceRange}
-                    max={20000}
-                    min={500}
-                    step={500}
+                    max={60000}
+                    min={5000}
+                    step={1000}
                     className="w-full"
                   />
                 </div>
@@ -259,7 +258,7 @@ export default function ExplorePage() {
               <div className="mb-8">
                 <h3 className="text-sm font-medium mb-4">Property Type</h3>
                 <div className="space-y-3">
-                  {["Apartment", "House", "Room", "Villa"].map((type) => (
+                  {["Apartment", "House", "Villa", "Cabin", "Hotel"].map((type) => (
                     <div key={type} className="flex items-center space-x-3">
                       <Checkbox
                         id={type}

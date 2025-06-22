@@ -8,36 +8,73 @@ import Link from "next/link"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/language-context"
 import { AuthGuard } from "@/components/auth-guard"
+import { propertiesAPI } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
 
 interface SetupData {
-  photos: string[]
-  title: string
-  description: string
-  selectedAmenities: string[]
-  pricing: {
+  // Property Type (from /host/setup)
+  propertyType?: string
+  
+  // Place Details (from /host/setup/place)
+  location?: {
+    address: string
+    city: string
+    state: string
+    country: string
+    zipCode: string
+  }
+  guestCounts?: {
+    guests: number
+    bedrooms: number
+    beds: number
+    bathrooms: number
+  }
+  
+  // Standout Details (from /host/setup/standout)
+  photos?: string[]
+  title?: string
+  description?: string
+  selectedAmenities?: string[]
+  
+  // Pricing (if from another step)
+  pricing?: {
     basePrice: string
     cleaningFee: string
     securityDeposit: string
   }
+  
   timestamp: number
 }
 
 export default function PublishListingPage() {
   const { t } = useLanguage()
+  const { user } = useAuth()
   const [isPublishing, setIsPublishing] = useState(false)
   const [isPublished, setIsPublished] = useState(false)
   const [setupData, setSetupData] = useState<SetupData | null>(null)
-
+  const [publishError, setPublishError] = useState<string | null>(null)
   useEffect(() => {
     // Load setup data from localStorage
-    const savedData = localStorage.getItem('kostra_host_setup')
-    if (savedData) {
-      try {
-        const data = JSON.parse(savedData) as SetupData
-        setSetupData(data)
-      } catch (error) {
-        console.error('Error parsing setup data:', error)
+    try {
+      const propertyType = localStorage.getItem('host_setup_property_type')
+      const placeData = localStorage.getItem('host_setup_place_data')
+      const standoutData = localStorage.getItem('host_setup_standout_data')
+      
+      if (standoutData) {
+        const parsedStandoutData = JSON.parse(standoutData)
+        const parsedPlaceData = placeData ? JSON.parse(placeData) : {}
+        
+        setSetupData({
+          propertyType: propertyType || '',
+          ...parsedPlaceData,
+          ...parsedStandoutData,
+          timestamp: Date.now()
+        })
       }
+    } catch (error) {
+      console.error('Error loading setup data:', error)
+      setPublishError('Failed to load listing data. Please go back and complete the setup.')
     }
   }, [])
 
@@ -47,13 +84,58 @@ export default function PublishListingPage() {
     const cleaningFee = Number(setupData.pricing.cleaningFee) || 0
     return basePrice + cleaningFee
   }
-
   const handlePublish = async () => {
+    if (!setupData || !user) {
+      setPublishError('Missing listing data or user authentication.')
+      return
+    }
+
     setIsPublishing(true)
-    // Simulate publishing process
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-    setIsPublishing(false)
-    setIsPublished(true)
+    setPublishError(null)
+
+    try {      // Prepare property data for API
+      const propertyData = {
+        title: setupData.title || 'Untitled Property',
+        description: setupData.description || 'No description provided',
+        type: setupData.propertyType || 'apartment',
+        address: setupData.location?.address || '',
+        city: setupData.location?.city || '',
+        state: setupData.location?.state || '',
+        country: setupData.location?.country || 'Nepal',
+        zipCode: setupData.location?.zipCode || '', // Frontend sends zipCode
+        price: parseFloat(setupData.pricing?.basePrice || '1000'),
+        currency: 'NPR',
+        bedrooms: setupData.guestCounts?.bedrooms || 1,
+        bathrooms: setupData.guestCounts?.bathrooms || 1,
+        maxGuests: setupData.guestCounts?.guests || 1,
+        amenities: setupData.selectedAmenities || [],
+        images: setupData.photos || [],
+        availability: true
+      }
+
+      console.log('Publishing property with data:', propertyData)
+
+      // Create property in database
+      const response = await propertiesAPI.create(propertyData)
+      
+      if (response.success) {
+        // Clear localStorage data after successful creation
+        localStorage.removeItem('host_setup_property_type')
+        localStorage.removeItem('host_setup_place_data')
+        localStorage.removeItem('host_setup_standout_data')
+        
+        setIsPublished(true)
+        toast.success('Your listing has been published successfully!')
+      } else {
+        throw new Error(response.message || 'Failed to publish listing')
+      }
+    } catch (error) {
+      console.error('Publish error:', error)
+      setPublishError(error instanceof Error ? error.message : 'Failed to publish listing. Please try again.')
+      toast.error('Failed to publish listing. Please try again.')
+    } finally {
+      setIsPublishing(false)
+    }
   }
 
   if (isPublished) {

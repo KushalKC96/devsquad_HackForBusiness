@@ -102,6 +102,62 @@ export const propertiesAPI = {
     }),
 };
 
+// Long-Term Contracts API
+export const contractsAPI = {
+  create: (contractData: {
+    property_id: number;
+    start_date: string;
+    end_date: string;
+    monthly_rent: number;
+    security_deposit?: number;
+    fine_amount?: number;
+    terms_and_conditions?: string;
+    is_renewable?: boolean;
+  }) =>
+    apiRequest('/api/contracts', {
+      method: 'POST',
+      body: JSON.stringify(contractData),
+    }),
+
+  getById: (id: string | number) => apiRequest(`/api/contracts/${id}`),
+
+  getAll: (filters?: {
+    userId?: number;
+    status?: string;
+    role?: 'customer' | 'host';
+  }) => {
+    const queryString = filters ? new URLSearchParams(
+      Object.entries(filters).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null) {
+          acc[key] = value.toString();
+        }
+        return acc;
+      }, {} as Record<string, string>)
+    ).toString() : '';
+    return apiRequest(`/api/contracts${queryString ? `?${queryString}` : ''}`);
+  },
+
+  terminate: (id: string | number, termination_reason: string) =>
+    apiRequest(`/api/contracts/${id}/terminate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ termination_reason }),
+    }),
+
+  approve: (id: string | number) =>
+    apiRequest(`/api/contracts/${id}/approve`, {
+      method: 'PATCH',
+    }),
+
+  update: (id: string | number, updateData: {
+    terms_and_conditions?: string;
+    is_renewable?: boolean;
+  }) =>
+    apiRequest(`/api/contracts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updateData),
+    }),
+};
+
 // Bookings API
 export const bookingsAPI = {
   create: (bookingData: {

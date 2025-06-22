@@ -34,6 +34,7 @@ import Link from "next/link"
 import { propertiesAPI, bookingsAPI } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
+import { LongTermContractForm } from "@/components/long-term-contract-form"
 import type { DateRange } from "react-day-picker"
 
 interface Property {
@@ -447,9 +448,8 @@ export default function PropertyDetailPage() {
                     className="mt-1"
                     rows={3}
                   />
-                </div>
-
-                {/* Book Button */}                <Button
+                </div>                {/* Book Button */}
+                <Button
                   onClick={handleBooking}
                   disabled={!selectedDates?.from || !selectedDates?.to || bookingLoading}
                   className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
@@ -463,6 +463,26 @@ export default function PropertyDetailPage() {
                     "Select dates to book"
                   )}
                 </Button>
+
+                {/* Long-Term Contract Button */}
+                <div className="pt-2">
+                  <LongTermContractForm 
+                    property={{
+                      id: property.id,
+                      title: property.title,
+                      price: property.price,
+                      currency: property.currency,
+                      bedrooms: property.bedrooms,
+                      bathrooms: property.bathrooms,
+                      max_guests: property.max_guests,
+                      city: property.city,
+                      address: property.address
+                    }}
+                    onSuccess={() => {
+                      toast.success('Contract request submitted successfully!')
+                    }}
+                  />
+                </div>
 
                 {user && (
                   <p className="text-xs text-gray-600 text-center">
