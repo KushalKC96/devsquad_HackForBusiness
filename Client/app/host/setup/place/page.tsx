@@ -21,9 +21,9 @@ export default function TellUsAboutPlacePage() {
     country: "Nepal",
     address: "",
     city: "",
-    province: "",
-  })
-    const totalSteps = 12 // Total internal steps across all pages: 1 + 3 + 4 + 3 + 1 = 12
+    province: "",  })
+  
+  const totalSteps = 12 // Total internal steps across all pages: 1 + 3 + 4 + 3 + 1 = 12
   const currentGlobalStep = 1 + currentStep // Dynamic global step: 2, 3, 4 based on internal step
   const progress = (currentGlobalStep / totalSteps) * 100
 

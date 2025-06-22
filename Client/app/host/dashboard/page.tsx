@@ -273,9 +273,7 @@ export default function HostDashboard() {
                               <span className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-1" />
                                 {listing.bookings} bookings
-                              </span>
-                              <span className="flex items-center">
-                                <DollarSign className="w-4 h-4 mr-1" />
+                              </span>                              <span className="flex items-center">
                                 NPR {listing.revenue.toLocaleString()}
                               </span>
                               <span className="flex items-center">
