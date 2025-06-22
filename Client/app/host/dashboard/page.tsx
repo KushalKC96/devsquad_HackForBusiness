@@ -21,6 +21,8 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/contexts/auth-context"
+import { AuthGuard } from "@/components/auth-guard"
 
 interface Listing {
   id: string
@@ -114,9 +116,9 @@ export default function HostDashboard() {
     }
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthGuard requireRole="host">
+      <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -355,9 +357,9 @@ export default function HostDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </div>        </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

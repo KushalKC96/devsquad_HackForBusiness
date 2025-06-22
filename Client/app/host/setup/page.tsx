@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, ArrowRight, Home, Building, TreePine, Coffee, Hotel } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
+import { AuthGuard } from "@/components/auth-guard"
 
 export default function HostSetupPage() {
   const { t } = useLanguage()
@@ -60,10 +61,10 @@ export default function HostSetupPage() {
 
   const handleBack = () => {
     // Go back to host start page
-    window.location.href = "/host/start"
-  }
+    window.location.href = "/host/start"  }
   return (
-    <div className="min-h-screen bg-white">
+    <AuthGuard>
+      <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -143,9 +144,9 @@ export default function HostSetupPage() {
               {t("next")}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          </div>
-        </div>
+          </div>        </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

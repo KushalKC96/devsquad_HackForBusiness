@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
+import { AuthGuard } from "@/components/auth-guard"
 
 export default function GetReadyForGuestsPage() {
   const { t } = useLanguage()
@@ -277,9 +278,9 @@ export default function GetReadyForGuestsPage() {
         return null
     }
   }
-
   return (
-    <div className="min-h-screen bg-white">
+    <AuthGuard>
+      <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -326,9 +327,9 @@ export default function GetReadyForGuestsPage() {
               {currentStep === totalSteps ? "Publish Your Listing" : "Next"}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          </div>
-        </div>
+          </div>        </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

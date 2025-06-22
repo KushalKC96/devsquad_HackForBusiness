@@ -7,6 +7,7 @@ import { CheckCircle, Star, Calendar, DollarSign, Users, ArrowRight } from "luci
 import Link from "next/link"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/language-context"
+import { AuthGuard } from "@/components/auth-guard"
 
 interface SetupData {
   photos: string[]
@@ -93,10 +94,10 @@ export default function PublishListingPage() {
           </div>
         </div>
       </div>
-    )
-  }
+    )  }
   return (
-    <div className="min-h-screen bg-white">
+    <AuthGuard>
+      <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -262,9 +263,9 @@ export default function PublishListingPage() {
                 Host Guarantee
               </Link>
             </p>          </div>
-        </div>
-        )}
+        </div>        )}
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

@@ -25,6 +25,7 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/language-context"
+import { AuthGuard } from "@/components/auth-guard"
 
 export default function MakeItStandOutPage() {
   const { t } = useLanguage()
@@ -365,9 +366,9 @@ export default function MakeItStandOutPage() {
         return null
     }
   }
-
   return (
-    <div className="min-h-screen bg-white">
+    <AuthGuard>
+      <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -418,9 +419,9 @@ export default function MakeItStandOutPage() {
               {currentStep === totalSteps ? "Continue to Get Ready" : "Next"}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          </div>
-        </div>
+          </div>        </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

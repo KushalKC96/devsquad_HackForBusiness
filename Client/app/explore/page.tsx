@@ -1,18 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Search, Filter, Star, MapPin, Heart, Wifi, Car, ChefHat, Waves, Snowflake, Home, Loader2 } from "lucide-react"
+import { Search, Star, MapPin, Heart, Wifi, Car, ChefHat, Waves, Snowflake, Home, Loader2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/contexts/auth-context"
 import { propertiesAPI } from "@/lib/api"
 
 interface Property {
@@ -35,13 +35,14 @@ interface Property {
 
 export default function ExplorePage() {
   const { t } = useLanguage()
+  const { user } = useAuth()
+  const router = useRouter()
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [priceRange, setPriceRange] = useState([1000, 10000])
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([])
-  const [sortBy, setSortBy] = useState("recommended")
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -57,7 +58,6 @@ export default function ExplorePage() {
     'Lake View': Waves,
     'Wildlife View': Home,
   }
-
   // Fetch properties from API
   useEffect(() => {
     const fetchProperties = async () => {
@@ -65,7 +65,7 @@ export default function ExplorePage() {
         setLoading(true)
         const response = await propertiesAPI.getAll({
           page: currentPage,
-          limit: 12,
+          limit: 100,
           ...(searchQuery && { city: searchQuery }),
           ...(priceRange[0] && { minPrice: priceRange[0] }),
           ...(priceRange[1] && { maxPrice: priceRange[1] }),
@@ -111,26 +111,43 @@ export default function ExplorePage() {
         )
       )
     const matchesPropertyType = selectedPropertyTypes.length === 0 || selectedPropertyTypes.includes(property.type)
+    const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1]
 
-    return matchesAmenities && matchesPropertyType
+    return matchesAmenities && matchesPropertyType && matchesPrice
   })
-
-  const sortedProperties = [...filteredProperties].sort((a, b) => {
-    switch (sortBy) {
-      case "priceLowToHigh":
-        return a.price - b.price
-      case "priceHighToLow":
-        return b.price - a.price
-      case "highestRated":
-        return (parseFloat(b.avgRating || '0') - parseFloat(a.avgRating || '0'))
-      default:
-        return 0
+  const clearAllFilters = () => {
+    setSelectedAmenities([])
+    setSelectedPropertyTypes([])
+    setPriceRange([1000, 10000])
+    setSearchQuery('')
+  }
+  const handleHostClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!user) {
+      // User is not logged in, redirect to login page with redirect parameter
+      router.push('/auth?redirect=/host')
+    } else {
+      // User is logged in, check if they want to go to dashboard or start hosting
+      if (user.role === 'host') {
+        router.push('/host/dashboard')
+      } else {
+        router.push('/host')
+      }
     }
-  })
+  }
+  const sortedProperties = [...filteredProperties]
 
   const handleSearch = () => {
     setCurrentPage(1)
     // The useEffect will automatically trigger with the new searchQuery
+  }
+
+  const handlePropertyClick = (propertyId: number, e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      const currentPath = `/property/${propertyId}`
+      router.push(`/auth?redirect=${encodeURIComponent(currentPath)}`)
+    }
   }
 
   if (loading && properties.length === 0) {
@@ -153,276 +170,239 @@ export default function ExplorePage() {
         </div>
       </div>
     )
-  }
-  return (
+  }  return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo - clickable to go home */}
-            <Link href="/" className="text-2xl font-bold text-gray-900 hover:text-purple-600 transition-colors">
-              Kostra
+      {/* Header */}
+      <div className="bg-white border-b sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-2">
+                K
+              </div>
+              <span className="text-xl font-bold text-gray-900">Kostra</span>
             </Link>
 
-            {/* Navigation Links */}
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                {t("home") || "Home"}
-              </Link>
-              <Link href="/explore" className="text-purple-600 font-medium">
-                {t("explore") || "Explore"}
-              </Link>
-              <Link href="/host" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                {t("becomeHost") || "Become a Host"}
-              </Link>
-              <Link href="/help" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                {t("help") || "Help"}
-              </Link>
-            </div>
-
-            {/* Mobile Home Button */}
-            <div className="md:hidden">
-              <Link href="/">
-                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-                  <Home className="w-4 h-4 mr-2" />
-                  Home
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex items-center gap-4 flex-1 max-w-2xl">
-              <div className="relative flex-1">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md mx-8">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search destinations..."
-                  className="pl-10"
+                  className="pl-10 border-gray-300"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
-              <Button onClick={handleSearch}>Search</Button>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recommended">Recommended</SelectItem>
-                  <SelectItem value="priceLowToHigh">Price: Low to High</SelectItem>
-                  <SelectItem value="priceHighToLow">Price: High to Low</SelectItem>
-                  <SelectItem value="highestRated">Highest Rated</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                  </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Filter Properties</SheetTitle>
-                    <SheetDescription>
-                      Narrow down your search with these filters
-                    </SheetDescription>
-                  </SheetHeader>
-
-                  <div className="py-6 space-y-6">
-                    {/* Price Range */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Price Range (NPR {priceRange[0]} - NPR {priceRange[1]})
-                      </label>
-                      <Slider
-                        value={priceRange}
-                        onValueChange={setPriceRange}
-                        max={20000}
-                        min={500}
-                        step={500}
-                        className="w-full"
-                      />
-                    </div>
-
-                    {/* Property Type */}
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Property Type</label>
-                      <div className="space-y-2">
-                        {["apartment", "house", "villa", "cabin", "hotel"].map((type) => (
-                          <div key={type} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={type}
-                              checked={selectedPropertyTypes.includes(type)}
-                              onCheckedChange={(checked) =>
-                                handlePropertyTypeChange(type, checked as boolean)
-                              }
-                            />
-                            <label htmlFor={type} className="text-sm capitalize">
-                              {type}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Amenities */}
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Amenities</label>
-                      <div className="space-y-2">
-                        {["Wi-Fi", "Parking", "Kitchen", "Mountain View", "Lake View"].map((amenity) => (
-                          <div key={amenity} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={amenity}
-                              checked={selectedAmenities.includes(amenity)}
-                              onCheckedChange={(checked) =>
-                                handleAmenityChange(amenity, checked as boolean)
-                              }
-                            />
-                            <label htmlFor={amenity} className="text-sm">
-                              {amenity}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
+            </div>            {/* Navigation */}
+            <div className="flex items-center space-x-6">
+              <Link href="/" className="text-gray-600 hover:text-gray-900 font-medium">
+                Home
+              </Link>
+              <button 
+                onClick={handleHostClick}
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer"
+              >
+                {user ? "Host Dashboard" : "Become a Host"}
+              </button>
+              <Link href="/help" className="text-gray-600 hover:text-gray-900 font-medium">
+                Help
+              </Link>
+              {user && (
+                <div className="text-sm text-gray-500">
+                  Welcome, {user.firstName}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Results */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">
-            {sortedProperties.length} properties found
-          </h1>
-          <p className="text-gray-600">
-            Discover amazing places to stay in Nepal
-          </p>
-        </div>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex gap-8">
+          {/* Left Sidebar - Filters */}
+          <div className="w-80 shrink-0">
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold">Filters</h2>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearAllFilters}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Clear All
+                </Button>
+              </div>
 
-        {sortedProperties.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">No properties found matching your criteria.</p>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setSelectedAmenities([])
-                setSelectedPropertyTypes([])
-                setPriceRange([1000, 10000])
-                setSearchQuery('')
-              }}
-            >
-              Clear Filters
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedProperties.map((property) => {
-              const propertyAmenities = Array.isArray(property.amenities) ? property.amenities : 
-                (typeof property.amenities === 'string' ? JSON.parse(property.amenities) : [])
-              const propertyImages = Array.isArray(property.images) ? property.images : 
-                (typeof property.images === 'string' ? JSON.parse(property.images) : ['/placeholder.svg?height=250&width=350'])
+              {/* Price Range */}
+              <div className="mb-8">
+                <h3 className="text-sm font-medium mb-4">Price Range</h3>
+                <div className="mb-4">
+                  <Slider
+                    value={priceRange}
+                    onValueChange={setPriceRange}
+                    max={20000}
+                    min={500}
+                    step={500}
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>NPR {priceRange[0].toLocaleString()}</span>
+                  <span>NPR {priceRange[1].toLocaleString()}</span>
+                </div>
+              </div>
 
-              return (
-                <Link key={property.id} href={`/property/${property.id}`}>
-                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="relative">
-                      <div className="aspect-[4/3] relative overflow-hidden rounded-t-lg">
-                        <Image
-                          src={propertyImages[0] || '/placeholder.svg?height=250&width=350'}
-                          alt={property.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="absolute top-3 right-3 bg-white/80 hover:bg-white"
-                      >
-                        <Heart className="h-4 w-4" />
-                      </Button>
-                      {property.type && (
-                        <Badge className="absolute top-3 left-3 bg-black/70 text-white capitalize">
-                          {property.type}
-                        </Badge>
-                      )}
+              {/* Property Type */}
+              <div className="mb-8">
+                <h3 className="text-sm font-medium mb-4">Property Type</h3>
+                <div className="space-y-3">
+                  {["Apartment", "House", "Room", "Villa"].map((type) => (
+                    <div key={type} className="flex items-center space-x-3">
+                      <Checkbox
+                        id={type}
+                        checked={selectedPropertyTypes.includes(type.toLowerCase())}
+                        onCheckedChange={(checked) =>
+                          handlePropertyTypeChange(type.toLowerCase(), checked as boolean)
+                        }
+                        className="rounded"
+                      />
+                      <label htmlFor={type} className="text-sm text-gray-700 cursor-pointer">
+                        {type}
+                      </label>
                     </div>
+                  ))}
+                </div>
+              </div>
 
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-sm line-clamp-2 flex-1">
-                          {property.title}
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center text-gray-600 text-sm mb-2">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {property.city}
-                      </div>
-
-                      <div className="flex items-center gap-1 mb-3">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs font-medium">
-                          {property.avgRating || 'New'}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          ({property.reviewCount} reviews)
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-3 flex-wrap">
-                        {propertyAmenities.slice(0, 3).map((amenity: string) => {
-                          const IconComponent = amenityIcons[amenity as keyof typeof amenityIcons]
-                          return IconComponent ? (
-                            <div key={amenity} className="flex items-center gap-1">
-                              <IconComponent className="h-3 w-3 text-gray-400" />
-                            </div>
-                          ) : null
-                        })}
-                        {propertyAmenities.length > 3 && (
-                          <span className="text-xs text-gray-500">
-                            +{propertyAmenities.length - 3} more
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-bold">NPR {property.price.toLocaleString()}</span>
-                          <span className="text-gray-600 text-sm"> / night</span>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {property.max_guests} guests • {property.bedrooms} bed
-                        </div>
-                      </div>
-
-                      <div className="mt-2 text-xs text-gray-500">
-                        Host: {property.host_first_name} {property.host_last_name}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )
-            })}
+              {/* Amenities */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium mb-4">Amenities</h3>
+                <div className="space-y-3">
+                  {["Wi-Fi", "Parking", "Kitchen", "Pool", "Air Conditioning", "Balcony"].map((amenity) => (
+                    <div key={amenity} className="flex items-center space-x-3">
+                      <Checkbox
+                        id={amenity}
+                        checked={selectedAmenities.includes(amenity)}
+                        onCheckedChange={(checked) =>
+                          handleAmenityChange(amenity, checked as boolean)
+                        }
+                        className="rounded"
+                      />
+                      <label htmlFor={amenity} className="text-sm text-gray-700 cursor-pointer">
+                        {amenity}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Results Header */}
+            <div className="mb-6">
+              <h1 className="text-lg font-medium text-gray-900">
+                {sortedProperties.length} results found
+              </h1>
+            </div>
+
+            {/* Properties Grid */}
+            {sortedProperties.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 mb-4">No properties found matching your criteria.</p>
+                <Button variant="outline" onClick={clearAllFilters}>
+                  Clear Filters
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sortedProperties.map((property) => {                  const propertyAmenities = Array.isArray(property.amenities) ? property.amenities : 
+                    (typeof property.amenities === 'string' ? JSON.parse(property.amenities) : [])
+                  const propertyImages = Array.isArray(property.images) ? property.images : 
+                    (typeof property.images === 'string' ? JSON.parse(property.images) : ['/placeholder.svg?height=200&width=300'])
+
+                  return (
+                    <Link                      key={property.id} 
+                      href={`/property/${property.id}`}
+                      onClick={(e) => handlePropertyClick(property.id, e)}
+                    >
+                      <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-gray-200 overflow-hidden">
+                        <div className="relative">
+                          <div className="aspect-[4/3] relative overflow-hidden">                            <Image
+                              src={propertyImages[0] || '/placeholder.svg?height=200&width=300'}
+                              alt={property.title}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            {!user && (
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <div className="text-center text-white">
+                                  <p className="text-sm font-medium">Login to view details</p>
+                                  <p className="text-xs mt-1">Sign in to book this property</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="absolute top-3 right-3 bg-white/80 hover:bg-white shadow-sm"
+                          >
+                            <Heart className="h-4 w-4" />
+                          </Button>
+                          {property.availability && (
+                            <Badge className="absolute top-3 left-3 bg-green-500 text-white text-xs px-2 py-1">
+                              Instant Book
+                            </Badge>
+                          )}
+                        </div>
+
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-medium text-sm line-clamp-2 flex-1 text-gray-900">
+                              {property.title}
+                            </h3>
+                            <div className="flex items-center ml-2">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 mr-1" />
+                              <span className="text-xs font-medium">
+                                {property.avgRating || '4.5'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center text-gray-500 text-xs mb-3">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            <span>{property.city}, Nepal</span>
+                          </div>
+
+                          <div className="mb-3">
+                            <div className="flex items-baseline">
+                              <span className="text-lg font-semibold text-gray-900">
+                                NPR {property.price.toLocaleString()}
+                              </span>
+                              <span className="text-xs text-gray-500 ml-1">/ night</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {property.reviewCount} reviews
+                            </div>
+                          </div>
+
+                          <div className="text-xs text-gray-600">
+                            Hosted by {property.host_first_name} {property.host_last_name}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

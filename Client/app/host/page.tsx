@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
+import { AuthGuard } from "@/components/auth-guard"
 
 export default function BecomeHostPage() {
   const { t } = useLanguage()
@@ -45,9 +46,9 @@ export default function BecomeHostPage() {
 
     return Math.round(rate * bedroomMultiplier * nights)
   }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-orange-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -326,9 +327,9 @@ export default function BecomeHostPage() {
               {t("startHosting")}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Link>
-          </Button>
-        </div>
+          </Button>        </div>
       </section>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

@@ -102,21 +102,20 @@ export default function AuthPage() {
           password: formData.password,
           phone: formData.phoneNumber.trim() || undefined,
           role: 'guest'
-        })
-
-        // Show success message
-        setSuccessMessage("Account created successfully! Redirecting to home...")
+        })        // Show success message
+        setSuccessMessage("Account created successfully! Redirecting...")
         setTimeout(() => {
-          router.push('/')
+          const redirectUrl = searchParams.get('redirect') || '/'
+          router.push(redirectUrl)
         }, 2000)
-        
-      } else {
+          } else {
         // Sign in
         try {
           await login(formData.email.trim(), formData.password)
-          setSuccessMessage("Welcome back! Redirecting to home...")
+          setSuccessMessage("Welcome back! Redirecting...")
           setTimeout(() => {
-            router.push('/')
+            const redirectUrl = searchParams.get('redirect') || '/'
+            router.push(redirectUrl)
           }, 1500)
         } catch (loginError: any) {
           // Check if error indicates user doesn't exist or invalid credentials

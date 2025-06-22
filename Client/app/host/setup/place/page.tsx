@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, ArrowRight, Home, Building, TreePine, Coffee, Hotel, Minus, Plus } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
+import { AuthGuard } from "@/components/auth-guard"
 
 export default function TellUsAboutPlacePage() {
   const { t } = useLanguage()
@@ -209,44 +210,43 @@ export default function TellUsAboutPlacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-2xl font-bold text-gray-900">
-              Kostra
-            </Link>
-            <div className="text-sm text-gray-600">{t("tellUsAboutPlace")}</div>
+    <AuthGuard>
+      <div className="min-h-screen bg-white">
+        {/* Navigation */}
+        <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link href="/" className="text-2xl font-bold text-gray-900">
+                Kostra
+              </Link>
+              <div className="text-sm text-gray-600">{t("tellUsAboutPlace")}</div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Progress Bar */}
+        <div className="bg-white border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">
+                Step {currentGlobalStep} of {totalSteps}
+              </span>
+            </div>
+            <Progress value={progress} className="h-2" />
           </div>
         </div>
-      </nav>
 
-      {/* Progress Bar */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">
-              Step {currentGlobalStep} of {totalSteps}
-            </span>
-          </div>
-          <Progress value={progress} className="h-2" />
+        {/* Main Content */}
+        <div className="py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">{renderStepContent()}</div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">{renderStepContent()}</div>
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={handleBack} className="rounded-full px-6">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {t("back")}
-            </Button>            <Button
+        {/* Navigation Buttons */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handleBack} className="rounded-full px-6">
+                <ArrowLeft className="w-4 h-4
               onClick={handleNext}
               disabled={
                 (currentStep === 1 && (!location.address || !location.city))
@@ -256,9 +256,9 @@ export default function TellUsAboutPlacePage() {
               {currentStep === 3 ? "Continue to Make it Stand Out" : t("next")}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          </div>
-        </div>
+          </div>        </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

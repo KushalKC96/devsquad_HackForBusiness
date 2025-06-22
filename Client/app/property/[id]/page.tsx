@@ -126,15 +126,16 @@ export default function PropertyDetailPage() {
       setLoading(false)
     }
   }
-
   const calculateTotalPrice = () => {
     if (!selectedDates?.from || !selectedDates?.to || !property) return 0
     const days = Math.ceil((selectedDates.to.getTime() - selectedDates.from.getTime()) / (1000 * 60 * 60 * 24))
     return days * property.price
   }
+  
   const handleBooking = async () => {
     if (!user) {
-      router.push('/auth?mode=signin')
+      const currentPath = window.location.pathname + window.location.search;
+      router.push(`/auth?redirect=${encodeURIComponent(currentPath)}`)
       return
     }
 
