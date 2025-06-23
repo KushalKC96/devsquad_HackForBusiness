@@ -1,297 +1,188 @@
-# Kostra - Property Rental Platform
+# Kostra - Renting Reimagined For Nepal 🏔️
 
-A modern, full-stack property rental platform similar to Airbnb, built with Next.js, Node.js, and PostgreSQL. Kostra enables users to list, discover, and book unique accommodations worldwide.
-
-## 🌟 Features
-
-### For Guests
-- **Property Discovery**: Browse and search properties with filters
-- **Booking System**: Seamless booking experience with payment integration
-- **User Dashboard**: Manage bookings, reviews, and profile
-- **Review System**: Rate and review stays
-- **Safety Features**: Report safety concerns and access guidelines
-
-### For Hosts
-- **Property Management**: Easy listing creation and management
-- **Host Dashboard**: Track earnings, bookings, and performance
-- **Setup Wizard**: Step-by-step property listing process
-- **Analytics**: Monitor listing performance and revenue
-- **Calendar Management**: Availability tracking
-
-### Platform Features
-- **Multi-language Support**: Built-in internationalization
-- **Responsive Design**: Works on all devices
-- **Authentication**: Secure JWT-based authentication
-- **Payment Processing**: Integrated payment system
-- **Admin Panel**: Platform management and moderation
-- **Company Pages**: About, careers, referral program
-- **Safety Center**: Guidelines and reporting system
-
-## 🚀 Tech Stack
-
-### Frontend
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS + shadcn/ui components
-- **State Management**: React Context API
-- **Authentication**: JWT with custom hooks
-- **Forms**: React Hook Form with validation
-- **Icons**: Lucide React
-
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: SQLite (development) / PostgreSQL (production)
-- **ORM**: Knex.js with migrations
-- **Authentication**: JWT tokens
-- **Security**: Helmet, bcryptjs, rate limiting
-- **Validation**: Joi schemas
-- **File Upload**: Multer with image support
-
-## 📁 Project Structure
-
-```
-DEVSQUAD/
-├── Client/                 # Next.js frontend application
-│   ├── app/               # App router pages
-│   │   ├── auth/          # Authentication pages
-│   │   ├── dashboard/     # User dashboards (guest/host)
-│   │   ├── explore/       # Property browsing
-│   │   ├── host/          # Host-specific pages
-│   │   ├── property/      # Property details
-│   │   ├── checkout/      # Payment and booking
-│   │   └── api/           # API routes
-│   ├── components/        # Reusable UI components
-│   ├── contexts/          # React contexts
-│   ├── hooks/             # Custom hooks
-│   ├── lib/               # Utilities and API functions
-│   └── public/            # Static assets
-├── Server/                # Express.js backend API
-│   ├── src/
-│   │   ├── routes/        # API endpoints
-│   │   ├── middleware/    # Auth and validation
-│   │   └── config/        # Database configuration
-│   ├── migrations/        # Database migrations
-│   └── seeds/             # Sample data
-└── README.md              # This file
-```
-
-## 🛠 Installation & Setup
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Git
-
-### Quick Start
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd DEVSQUAD
-   ```
-
-2. **Setup Backend**
-   ```bash
-   cd Server
-   npm install
-   cp .env.example .env  # Configure your environment variables
-   npm run migrate       # Run database migrations
-   npm run seed         # Seed with sample data
-   npm start            # Start backend server (port 5000)
-   ```
-
-3. **Setup Frontend**
-   ```bash
-   cd ../Client
-   npm install
-   npm run dev          # Start frontend server (port 3000)
-   ```
-
-4. **Access the application**
-   - Frontend: `http://localhost:3000`
-   - Backend API: `http://localhost:5000`
-   - API Health Check: `http://localhost:5000/health`
-
-## 🌐 Environment Variables
-
-### Backend (.env in Server directory)
-```env
-NODE_ENV=development
-PORT=5000
-DB_HOST=localhost
-DB_NAME=kostra_db
-DB_USER=your_username
-DB_PASSWORD=your_password
-JWT_SECRET=your_jwt_secret_here
-JWT_EXPIRE=7d
-FRONTEND_URL=http://localhost:3000
-```
-
-### Frontend (.env.local in Client directory)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
-```
-
-## 📖 Key Pages & Routes
-
-### Public Pages
-- `/` - Homepage with featured properties
-- `/explore` - Property search and browsing
-- `/property/[id]` - Property detail pages
-- `/auth` - Login/registration
-- `/company/*` - About, careers, safety, referrals
-
-### Protected Pages
-- `/dashboard/guest` - Guest booking management
-- `/dashboard/host` - Host property management
-- `/checkout` - Payment and booking confirmation
-
-### Host Pages
-- `/host` - Become a host landing page
-- `/host/create` - Property creation wizard
-- `/host/setup/*` - Multi-step listing setup
-- `/host/dashboard` - Host management dashboard
-- `/host/listing/preview` - Preview your listing
-
-## 🔑 Key Features Implementation
-
-### Property Setup Wizard
-Multi-step process for hosts to create listings:
-1. **Basic Info**: Property type, location, capacity
-2. **Amenities**: Select available amenities
-3. **Photos**: Upload property images
-4. **Standout**: Description and unique features
-5. **Pricing**: Set rates and fees
-6. **Publish**: Review and go live
-
-### Booking Flow
-1. Property selection and date picking
-2. Guest information collection
-3. Payment processing with Stripe integration
-4. Booking confirmation and management
-
-### Dashboard System
-- **Guest Dashboard**: View bookings, past stays, reviews
-- **Host Dashboard**: Property performance, earnings, calendar
-
-## 🔐 Authentication & Security
-
-- JWT-based authentication
-- Password hashing with bcrypt
-- Protected routes with middleware
-- Input validation and sanitization
-- CORS configuration
-- Rate limiting on API endpoints
-
-## 🎨 UI/UX Design
-
-- Modern, clean interface inspired by Airbnb
-- Fully responsive design (mobile, tablet, desktop) 
-- Dark/light theme support
-- Smooth animations and transitions
-- Accessible components following WCAG guidelines
-- Multi-language support ready
-
-## 📊 Database Schema
-
-### Core Tables
-- **users**: User accounts and profiles
-- **properties**: Property listings and details
-- **bookings**: Booking records and status
-- **reviews**: User reviews and ratings
-
-### Migration System
-- Automated database migrations
-- Seed data for development
-- Version control for schema changes
-
-## 🚀 Deployment
-
-### Frontend (Vercel)
-```bash
-cd Client
-npm run build
-vercel --prod
-```
-
-### Backend (Vercel/Railway/Heroku)
-```bash
-cd Server
-npm run build
-# Deploy to your chosen platform
-```
-
-### Database
-- **Development**: SQLite (included)
-- **Production**: PostgreSQL (Supabase/Neon recommended)
-
-## 🧪 Testing
-
-```bash
-# Backend tests
-cd Server
-npm test
-
-# Frontend tests  
-cd Client
-npm test
-```
-
-## 📱 Mobile Responsiveness
-
-The platform is fully responsive and works seamlessly on:
-- Desktop (1920px+)
-- Laptop (1024px+) 
-- Tablet (768px+)
-- Mobile (320px+)
-
-## 🔧 Development Scripts
-
-### Backend
-- `npm start` - Start production server
-- `npm run dev` - Start development server with nodemon
-- `npm run migrate` - Run database migrations
-- `npm run seed` - Seed database with sample data
-- `npm test` - Run tests
-
-### Frontend
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm test` - Run tests
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support & Help
-
-- **Documentation**: Check the README files in Client/ and Server/ directories
-- **Issues**: Create an issue on GitHub
-- **Email**: support@kostra.com
-
-## 🔮 Future Enhancements
-
-- [ ] Real-time messaging between hosts and guests
-- [ ] Advanced search with map integration
-- [ ] Mobile app development
-- [ ] AI-powered recommendations
-- [ ] Social features and user profiles
-- [ ] Multi-currency support
-- [ ] Advanced analytics dashboard
-- [ ] Integration with external booking platforms
+*A modern property rental platform connecting travelers with unique accommodations across the beautiful landscapes of Nepal*
 
 ---
 
-**Kostra** - Making travel accommodation booking simple and secure. 🏠✨
+## What is Kostra?
+
+Kostra is Nepal's premier property rental platform that reimagines how people find and book accommodations. From traditional Newari houses in Bhaktapur's heritage squares to luxury mountain-view apartments in Kathmandu, lakeside villas in Pokhara, and adventure lodges in the Himalayas - Kostra brings Nepal's diverse hospitality offerings to your fingertips.
+
+Unlike traditional booking platforms, Kostra focuses specifically on the unique cultural and geographical diversity of Nepal, offering everything from heritage experiences to mountain adventures, all while supporting local hosts and promoting sustainable tourism.
+
+## 🌟 Why Choose Kostra?
+
+**For Travelers & Guests:**
+- **Authentic Experiences**: Stay in traditional Newari houses, mountain lodges, and heritage properties that showcase Nepal's rich culture
+- **Verified Properties**: Every listing is verified with authentic photos showcasing Nepal's stunning landscapes
+- **Flexible Booking**: Short-term stays for trekkers and tourists, or long-term rentals for digital nomads and professionals
+- **Local Insights**: Connect with local hosts who share insider knowledge about hidden gems and cultural experiences
+- **Safety First**: Comprehensive safety guidelines and 24/7 support for peace of mind
+
+**For Property Owners & Hosts:**
+- **Easy Property Management**: Simple wizard-guided setup to list your property in minutes
+- **Fair Pricing**: Transparent fee structure that ensures hosts get the best value
+- **Marketing Support**: Professional photography guidelines and listing optimization
+- **Community Building**: Join a network of Nepali hosts passionate about sharing their culture
+- **Business Growth**: Analytics and insights to optimize your hosting business
+
+**What Makes Us Different:**
+- **Nepal-Focused**: Deep understanding of local culture, festivals, and travel patterns
+- **Cultural Integration**: Properties are categorized by experiences - Heritage, Adventure, Spiritual, Nature
+- **Sustainable Tourism**: Promoting responsible travel that benefits local communities
+- **Multilingual Support**: Available in English and Nepali for seamless communication
+- **Local Payment Methods**: Support for local banking and payment preferences
+
+## 🏠 Types of Experiences We Offer
+
+### Heritage & Culture
+- Traditional Newari houses in Bhaktapur and Patan heritage areas
+- Historic properties near ancient temples and cultural sites
+- Family-run guesthouses offering authentic Nepali hospitality
+- Properties with traditional architecture and modern comfort
+
+### Mountain & Adventure
+- Mountain lodges with Himalayan sunrise views in Nagarkot and Dhulikhel
+- Base camps for trekking expeditions in popular routes
+- Adventure resorts near rivers for rafting and outdoor activities
+- Eco-lodges in national parks for wildlife experiences
+
+### City & Business
+- Modern apartments in Kathmandu's business districts
+- Executive suites near embassies and corporate offices
+- Transit-friendly accommodations near the airport
+- Co-working friendly spaces for digital professionals
+
+### Nature & Wellness
+- Lakeside villas in Pokhara with mountain reflections
+- Peaceful monastery guesthouses for spiritual retreats
+- Garden properties surrounded by botanical beauty
+- Riverside cottages perfect for meditation and yoga
+
+## 🎯 How It Works
+
+### For Guests:
+1. **Discover**: Browse curated properties across Nepal's diverse regions
+2. **Choose**: Filter by experience type, price range, and amenities
+3. **Connect**: Chat with local hosts to learn about the area
+4. **Book**: Secure booking with flexible payment options
+5. **Experience**: Enjoy your stay with host support and local recommendations
+6. **Review**: Share your experience to help future travelers
+
+### For Hosts:
+1. **Setup**: Use our guided wizard to create your property listing
+2. **Showcase**: Upload beautiful photos highlighting your property's unique features
+3. **Price**: Set competitive rates with our pricing guidance
+4. **Welcome**: Receive booking requests and connect with guests
+5. **Host**: Provide excellent experiences and earn great reviews
+6. **Grow**: Use our analytics to optimize and expand your hosting business
+
+## 🌍 Our Impact on Nepal's Tourism
+
+Kostra is more than just a booking platform - we're contributing to Nepal's tourism ecosystem by:
+
+- **Supporting Local Communities**: Direct bookings mean more revenue stays with local hosts
+- **Promoting Cultural Exchange**: Facilitating authentic interactions between travelers and Nepali families
+- **Sustainable Tourism**: Encouraging responsible travel practices and environmental awareness
+- **Digital Empowerment**: Helping traditional hosts embrace digital marketing and management
+- **Economic Growth**: Contributing to Nepal's growing hospitality and technology sectors
+
+## 🏔️ Popular Destinations on Kostra
+
+### Kathmandu Valley
+The cultural heart of Nepal with ancient temples, vibrant markets, and modern amenities. Stay in heritage areas like Bhaktapur and Patan, or choose modern apartments in business districts.
+
+### Pokhara
+Nepal's adventure capital with stunning lake views and mountain panoramas. Perfect for trekkers starting their Annapurna journey or those seeking lakeside tranquility.
+
+### Mountain Regions
+From Nagarkot's sunrise views to Dhulikhel's Himalayan vistas, experience Nepal's mountains without the full trekking commitment.
+
+### National Parks
+Wildlife lodges in Chitwan for jungle safaris, and eco-friendly accommodations that bring you closer to Nepal's incredible biodiversity.
+
+### Spiritual Centers
+Monastery guesthouses, meditation retreats, and peaceful environments for those seeking spiritual experiences in the birthplace of Buddha.
+
+## 🎨 The Platform Experience
+
+### Beautiful, Intuitive Design
+Our platform features a clean, modern interface inspired by Nepal's natural beauty. Every element is designed to make finding and booking accommodations as smooth as a gentle mountain breeze.
+
+### Mobile-First Approach
+Whether you're planning from home or booking on-the-go during your Nepal journey, Kostra works seamlessly on all devices.
+
+### Real Nepali Hospitality
+Our customer support team understands both the technical platform and the cultural nuances of Nepali hospitality, ensuring authentic assistance whenever you need it.
+
+## � Trust & Safety
+
+### For Guests:
+- Verified host identities and property documentation
+- Secure payment processing with multiple options
+- 24/7 customer support in English and Nepali
+- Safety guidelines specific to Nepal travel
+- Emergency contact system for peace of mind
+
+### For Hosts:
+- Guest verification and review system
+- Secure payment handling with transparent fee structure
+- Property protection guidelines
+- Host community support and best practices sharing
+- Legal compliance assistance for rental regulations
+
+## � Technology & Innovation
+
+Kostra is built with modern technology to ensure reliability, security, and scalability:
+
+- **Fast & Reliable**: Cloud-based infrastructure ensuring 99.9% uptime
+- **Secure**: Bank-level encryption for all transactions and personal data
+- **Smart Search**: AI-powered recommendations based on your preferences
+- **Real-time**: Instant booking confirmations and host communications
+- **Multilingual**: Built-in support for English and Nepali languages
+
+## 🌱 Sustainable Tourism Commitment
+
+We believe in tourism that benefits everyone:
+
+- **Local First**: Prioritizing locally-owned properties and family businesses
+- **Cultural Respect**: Guidelines ensuring respectful cultural exchange
+- **Environmental Care**: Promoting eco-friendly practices among hosts and guests
+- **Community Development**: Partnerships with local organizations for community benefit
+- **Education**: Sharing knowledge about responsible travel in Nepal
+
+## 📱 Coming Soon
+
+### Mobile Apps
+Native iOS and Android apps for even better on-the-go booking and hosting management.
+
+### Advanced Features
+- Virtual property tours using 360° photography
+- Real-time chat translation between English and Nepali
+- Integration with local transportation and activity providers
+- Loyalty program rewarding frequent travelers to Nepal
+- Host mentorship program for new property owners
+
+### Expanded Coverage
+- Integration with adventure activity providers
+- Partnership with local restaurants and cultural experiences
+- Connection with certified trekking guides and agencies
+- Collaboration with Nepal's tourism boards for authentic experiences
+
+## 🤝 Join the Kostra Community
+
+### Become a Host
+If you own property in Nepal - whether it's a family home, a traditional house, or a modern apartment - join our growing community of hosts. We provide all the tools, support, and guidance you need to start earning from your property while sharing Nepal's beauty with the world.
+
+### Travel with Purpose
+Choose Kostra for your Nepal accommodations and become part of a movement that supports local communities, preserves cultural heritage, and promotes sustainable tourism.
+
+### Partner with Us
+Are you a local business, tour operator, or cultural organization? Let's collaborate to create even better experiences for travelers while supporting Nepal's tourism ecosystem.
+
+---
+
+**Kostra** - Where every stay tells a story, and every story connects cultures. 
+
+*Experience Nepal. Support Local. Travel Responsibly.*
+
