@@ -53,8 +53,12 @@ export default function HostSetupPage() {
       icon: Hotel,
     },
   ]
-
   const handleNext = () => {
+    if (selectedPropertyType) {
+      // Save selected property type to localStorage
+      localStorage.setItem('host_setup_property_type', selectedPropertyType)
+      console.log('Saved property type:', selectedPropertyType)
+    }
     // Navigate directly to the next page in setup flow
     window.location.href = "/host/setup/place"
   }

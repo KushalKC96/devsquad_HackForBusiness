@@ -14,7 +14,7 @@ const propertySchema = Joi.object({
   city: Joi.string().required(),
   state: Joi.string().required(),
   country: Joi.string().required(),
-  zipCode: Joi.string().allow('').optional(), // Allow empty zipCode
+  zipCode: Joi.string().allow('').optional().default('00000'), // Allow empty, provide default
   latitude: Joi.number().optional(),
   longitude: Joi.number().optional(),
   price: Joi.number().positive().required(),
@@ -188,29 +188,50 @@ router.get('/:id', async (req, res) => {
 
 // @route POST /api/properties
 // @desc Create new property
-// @access Private (Host)
-router.post('/', hostAuth, async (req, res) => {
+// @access Private (Host) - but auto-promotes users to hosts
+router.post('/', auth, async (req, res) => {
   try {
+    // Auto-promote user to host if they're creating a property
+    if (req.user.role === 'guest') {
+      await db('users')
+        .where({ id: req.user.id })
+        .update({ role: 'host', updated_at: new Date() });
+      
+      req.user.role = 'host'; // Update the user object for this request
+      console.log(`User ${req.user.email} promoted to host`);
+    }    // Check if user is now a host or admin
+    if (req.user.role !== 'host' && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Host rights required.'
+      });
+    }
+
+    console.log('Received property data:', req.body);
+    
     const { error, value } = propertySchema.validate(req.body);
     if (error) {
+      console.error('Validation error:', error.details[0].message);
       return res.status(400).json({
         success: false,
         message: error.details[0].message
       });
-    }    const propertyData = {
+    }
+
+    console.log('Validated data:', value);
+
+    const propertyData = {
       ...value,
       host_id: req.user.id,
       is_active: true,
       created_at: new Date(),
       updated_at: new Date()
-    };
-
-    // Handle field name mapping between frontend and database
-    if (propertyData.zipCode) {
-      propertyData.zip_code = propertyData.zipCode;
+    };    // Handle field name mapping between frontend and database
+    if ('zipCode' in propertyData) {
+      propertyData.zip_code = propertyData.zipCode || '00000'; // Ensure non-empty
       delete propertyData.zipCode;
     }
-    if (propertyData.maxGuests) {
+    if ('maxGuests' in propertyData) {
       propertyData.max_guests = propertyData.maxGuests;
       delete propertyData.maxGuests;
     }
@@ -224,6 +245,8 @@ router.post('/', hostAuth, async (req, res) => {
     if (propertyData.images) {
       propertyData.images = JSON.stringify(propertyData.images);
     }
+
+    console.log('Final property data for database:', propertyData);
 
     const [property] = await db('properties')
       .insert(propertyData)

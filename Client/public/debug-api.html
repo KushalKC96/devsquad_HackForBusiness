@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug API Call</title>
+</head>
+<body>
+    <h1>Debug API Response</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/properties?limit=50&sortBy=id&sortOrder=desc');
+                const data = await response.json();
+                
+                console.log('Full response:', data);
+                console.log('Properties count:', data.data?.properties?.length || 0);
+                
+                if (data.success && data.data?.properties) {
+                    const latest5 = data.data.properties.slice(0, 5);
+                    resultDiv.innerHTML = `
+                        <h2>Success! Got ${data.data.properties.length} properties</h2>
+                        <h3>Latest 5 properties:</h3>
+                        <ul>
+                            ${latest5.map(p => `<li>ID: ${p.id}, Title: ${p.title}, Price: NPR ${p.price}</li>`).join('')}
+                        </ul>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${JSON.stringify(data)}</p>`;
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Auto-test on page load
+        window.onload = testAPI;
+    </script>
+</body>
+</html>

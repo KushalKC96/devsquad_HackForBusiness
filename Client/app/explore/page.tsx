@@ -40,12 +40,11 @@ export default function ExplorePage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [priceRange, setPriceRange] = useState([5000, 60000])
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000])
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-
   const amenityIcons = {
     'Wi-Fi': Wifi,
     'Wifi': Wifi,
@@ -63,26 +62,108 @@ export default function ExplorePage() {
     const fetchProperties = async () => {
       try {
         setLoading(true)
+        console.log('🔍 Fetching properties from API...')
+        console.log('🌐 API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000')
+        
         const response = await propertiesAPI.getAll({
-          page: currentPage,
-          limit: 100,
+          page: 1,
+          limit: 1000, // Increased limit to get all properties
+          sortBy: 'created_at', // Sort by creation date
+          sortOrder: 'desc', // Newest first
           ...(searchQuery && { city: searchQuery }),
           ...(priceRange[0] && { minPrice: priceRange[0] }),
           ...(priceRange[1] && { maxPrice: priceRange[1] }),
         })
         
-        setProperties(response.data.properties)
-        setError(null)
-      } catch (err) {
-        console.error('Failed to fetch properties:', err)
+        console.log('✅ API Response received:', response)
+        console.log('📊 Response structure:', {
+          success: response.success,
+          hasData: !!response.data,
+          hasProperties: !!response.data?.properties,
+          propertiesLength: response.data?.properties?.length || 0
+        })
+        
+        if (response.success && response.data && response.data.properties) {
+          console.log('🏠 Properties fetched:', response.data.properties.length)
+          console.log('🔍 First property sample:', response.data.properties[0])
+          setProperties(response.data.properties)
+        } else {
+          console.warn('⚠️ Unexpected API response structure:', response)
+          setProperties([])
+        }
+        setError(null)      } catch (err) {
+        console.error('❌ Failed to fetch properties:', err)
+        console.error('📋 Error details:', {
+          message: (err as Error).message || 'Unknown error',
+          stack: (err as Error).stack || 'No stack trace',
+          name: (err as Error).name || 'Unknown'
+        })
         setError('Failed to load properties. Please try again.')
+        setProperties([]) // Ensure we clear any stale data
       } finally {
         setLoading(false)
       }
     }
 
     fetchProperties()
-  }, [currentPage, searchQuery, priceRange])
+  }, [searchQuery, priceRange]) // Removed currentPage dependency to fetch all at once
+
+  // Function to manually refresh properties
+  const refreshProperties = async () => {
+    try {
+      setLoading(true)
+      console.log('Manually refreshing properties...')
+      const response = await propertiesAPI.getAll({
+        page: 1,
+        limit: 1000, // Increased limit to get all properties
+        sortBy: 'created_at', // Sort by creation date
+        sortOrder: 'desc', // Newest first
+        ...(searchQuery && { city: searchQuery }),
+        ...(priceRange[0] && { minPrice: priceRange[0] }),
+        ...(priceRange[1] && { maxPrice: priceRange[1] }),
+      })
+      
+      console.log('Refresh API Response:', response)
+      console.log('Properties refreshed:', response.data.properties.length)
+      setProperties(response.data.properties)
+      setError(null)
+    } catch (err) {
+      console.error('Failed to refresh properties:', err)
+      setError('Failed to refresh properties. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Auto-refresh when page becomes visible (e.g., when navigating back from other pages)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && properties.length > 0) {
+        console.log('Page became visible, refreshing properties...')
+        refreshProperties()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [properties.length]) // Re-run when properties change
+
+  // Also refresh when component mounts/user navigates to this page
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Window focused, refreshing properties...')
+      refreshProperties()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
 
   const handleAmenityChange = (amenity: string, checked: boolean) => {
     if (checked) {
@@ -99,7 +180,6 @@ export default function ExplorePage() {
       setSelectedPropertyTypes(selectedPropertyTypes.filter((t) => t !== type))
     }
   }
-
   const filteredProperties = properties.filter((property) => {
     const propertyAmenities = Array.isArray(property.amenities) ? property.amenities : 
       (typeof property.amenities === 'string' ? JSON.parse(property.amenities) : [])
@@ -115,10 +195,16 @@ export default function ExplorePage() {
 
     return matchesAmenities && matchesPropertyType && matchesPrice
   })
+  console.log('Total properties:', properties.length)
+  console.log('Filtered properties:', filteredProperties.length)
+  console.log('Selected amenities:', selectedAmenities)
+  console.log('Selected property types:', selectedPropertyTypes)
+  console.log('Price range:', priceRange)
+  
   const clearAllFilters = () => {
     setSelectedAmenities([])
     setSelectedPropertyTypes([])
-    setPriceRange([5000, 60000])
+    setPriceRange([0, 100000])
     setSearchQuery('')
   }
   const handleHostClick = (e: React.MouseEvent) => {
@@ -166,11 +252,12 @@ export default function ExplorePage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
-        </div>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>        </div>
       </div>
     )
-  }  return (
+  }
+
+  return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-50">
@@ -215,6 +302,17 @@ export default function ExplorePage() {
                 </div>
               )}
             </div>
+          </div>        </div>
+      </div>      {/* Page Title Section */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Explore Properties
+            </h1>
+            <p className="text-lg text-gray-600">
+              Discover unique accommodations across Nepal - from mountain lodges to lakeside villas
+            </p>
           </div>
         </div>
       </div>
@@ -241,9 +339,9 @@ export default function ExplorePage() {
                 <h3 className="text-sm font-medium mb-4">Price Range</h3>
                 <div className="mb-4">                  <Slider
                     value={priceRange}
-                    onValueChange={setPriceRange}
-                    max={60000}
-                    min={5000}
+                    onValueChange={(value: number[]) => setPriceRange([value[0], value[1]])}
+                    max={100000}
+                    min={0}
                     step={1000}
                     className="w-full"
                   />
@@ -301,25 +399,59 @@ export default function ExplorePage() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
-            {/* Results Header */}
+          <div className="flex-1">            {/* Results Header */}
             <div className="mb-6">
-              <h1 className="text-lg font-medium text-gray-900">
-                {sortedProperties.length} results found
-              </h1>
-            </div>
-
-            {/* Properties Grid */}
-            {sortedProperties.length === 0 ? (
+              <div className="flex items-center justify-between">
+                <h1 className="text-lg font-medium text-gray-900">
+                  {loading ? 'Loading...' : `${sortedProperties.length} results found`}
+                </h1>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={refreshProperties}
+                  disabled={loading}
+                  className="flex items-center space-x-2"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                  <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
+                </Button>
+              </div>
+              {/* Debug information */}
+              <div className="text-sm text-gray-500 mt-2">
+                <p>Total properties fetched: {properties.length}</p>
+                <p>After filtering: {filteredProperties.length}</p>
+                {error && <p className="text-red-500">Error: {error}</p>}
+              </div>
+            </div>{/* Properties Grid */}
+            {loading ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 mb-4">No properties found matching your criteria.</p>
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                <p>Loading properties...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-500 mb-4">{error}</p>
+                <Button onClick={() => window.location.reload()}>Try Again</Button>
+              </div>
+            ) : sortedProperties.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 mb-4">
+                  {properties.length === 0 
+                    ? 'No properties available in the database.' 
+                    : 'No properties found matching your criteria.'
+                  }
+                </p>
                 <Button variant="outline" onClick={clearAllFilters}>
                   Clear Filters
                 </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sortedProperties.map((property) => {                  const propertyAmenities = Array.isArray(property.amenities) ? property.amenities : 
+                {sortedProperties.map((property, index) => {                  const propertyAmenities = Array.isArray(property.amenities) ? property.amenities : 
                     (typeof property.amenities === 'string' ? JSON.parse(property.amenities) : [])
                   const propertyImages = Array.isArray(property.images) ? property.images : 
                     (typeof property.images === 'string' ? JSON.parse(property.images) : ['/placeholder.svg?height=200&width=300'])
@@ -330,11 +462,11 @@ export default function ExplorePage() {
                       onClick={(e) => handlePropertyClick(property.id, e)}
                     >
                       <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-gray-200 overflow-hidden">
-                        <div className="relative">
-                          <div className="aspect-[4/3] relative overflow-hidden">                            <Image
+                        <div className="relative">                          <div className="aspect-[4/3] relative overflow-hidden">                            <Image
                               src={propertyImages[0] || '/placeholder.svg?height=200&width=300'}
                               alt={property.title}
                               fill
+                              priority={index < 4}
                               className="object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                             {!user && (

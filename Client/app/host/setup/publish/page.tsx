@@ -54,6 +54,7 @@ export default function PublishListingPage() {
   const [isPublished, setIsPublished] = useState(false)
   const [setupData, setSetupData] = useState<SetupData | null>(null)
   const [publishError, setPublishError] = useState<string | null>(null)
+  
   useEffect(() => {
     // Load setup data from localStorage
     try {
@@ -61,8 +62,11 @@ export default function PublishListingPage() {
       const placeData = localStorage.getItem('host_setup_place_data')
       const standoutData = localStorage.getItem('host_setup_standout_data')
       
-      if (standoutData) {
-        const parsedStandoutData = JSON.parse(standoutData)
+      console.log('Loading setup data:', { propertyType, placeData, standoutData })
+      
+      // Load data if any component has data
+      if (propertyType || placeData || standoutData) {
+        const parsedStandoutData = standoutData ? JSON.parse(standoutData) : {}
         const parsedPlaceData = placeData ? JSON.parse(placeData) : {}
         
         setSetupData({
@@ -71,6 +75,8 @@ export default function PublishListingPage() {
           ...parsedStandoutData,
           timestamp: Date.now()
         })
+      } else {
+        setPublishError('No setup data found. Please complete the previous steps first.')
       }
     } catch (error) {
       console.error('Error loading setup data:', error)
@@ -88,21 +94,34 @@ export default function PublishListingPage() {
     if (!setupData || !user) {
       setPublishError('Missing listing data or user authentication.')
       return
-    }
-
-    setIsPublishing(true)
+    }    setIsPublishing(true)
     setPublishError(null)
 
-    try {      // Prepare property data for API
+    try {
+      console.log('Setup data title:', setupData.title, 'Length:', setupData.title?.length)
+      console.log('Setup data description:', setupData.description, 'Length:', setupData.description?.length)
+      
+      // Validate required data
+      if (!setupData.title || setupData.title.length < 5) {
+        setPublishError('Please provide a title with at least 5 characters in the previous step.')
+        return
+      }
+      
+      if (!setupData.description || setupData.description.length < 10) {
+        setPublishError('Please provide a description with at least 10 characters in the previous step.')
+        return
+      }
+      
+      // Prepare property data for API
       const propertyData = {
-        title: setupData.title || 'Untitled Property',
-        description: setupData.description || 'No description provided',
+        title: setupData.title,
+        description: setupData.description,
         type: setupData.propertyType || 'apartment',
         address: setupData.location?.address || '',
         city: setupData.location?.city || '',
         state: setupData.location?.state || '',
         country: setupData.location?.country || 'Nepal',
-        zipCode: setupData.location?.zipCode || '', // Frontend sends zipCode
+        zipCode: setupData.location?.zipCode || '44600', // Default zipCode for Nepal
         price: parseFloat(setupData.pricing?.basePrice || '1000'),
         currency: 'NPR',
         bedrooms: setupData.guestCounts?.bedrooms || 1,
@@ -323,8 +342,27 @@ export default function PublishListingPage() {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </CardContent>            </Card>
+
+            {publishError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start">
+                  <div className="text-red-600 text-sm">
+                    <strong>Error:</strong> {publishError}
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.location.href = "/host/setup/standout"}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    Go Back to Edit
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Button
               onClick={handlePublish}

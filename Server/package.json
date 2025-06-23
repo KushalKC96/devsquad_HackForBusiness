@@ -2,10 +2,11 @@
   "name": "kostra-backend",
   "version": "1.0.0",
   "description": "Backend API for Kostra property rental platform",
-  "main": "src/server.js",  "scripts": {
+  "main": "src/server.js",
+  "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "dev:kill": "for /f \"tokens=5\" %a in ('netstat -ano ^| findstr :5000') do taskkill /f /pid %a & npm run dev",
+    "dev:kill": "kill-port-5000.bat",
     "build": "npm install",
     "test": "jest",
     "migrate": "knex migrate:latest",

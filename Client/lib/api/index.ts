@@ -70,6 +70,8 @@ export const propertiesAPI = {
     maxPrice?: number;
     bedrooms?: number;
     maxGuests?: number;
+    sortBy?: string;
+    sortOrder?: string;
   }) => {
     const queryString = filters ? new URLSearchParams(
       Object.entries(filters).reduce((acc, [key, value]) => {

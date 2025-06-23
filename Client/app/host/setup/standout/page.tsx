@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -40,6 +40,37 @@ export default function MakeItStandOutPage() {
     securityDeposit: "",
   })
   
+  // Clean up old localStorage data on component mount
+  useEffect(() => {
+    const cleanupOldData = () => {
+      try {
+        // Remove old data older than 24 hours
+        const keys = Object.keys(localStorage)
+        const now = Date.now()
+        const oneDayInMs = 24 * 60 * 60 * 1000
+        
+        keys.forEach(key => {
+          if (key.startsWith('host_setup_')) {
+            try {
+              const data = JSON.parse(localStorage.getItem(key) || '{}')
+              if (data.timestamp && (now - data.timestamp) > oneDayInMs) {
+                localStorage.removeItem(key)
+                console.log(`Cleaned up old data: ${key}`)
+              }
+            } catch (e) {
+              // Invalid data, remove it
+              localStorage.removeItem(key)
+            }
+          }
+        })
+      } catch (error) {
+        console.error('Error cleaning up localStorage:', error)
+      }
+    }
+    
+    cleanupOldData()
+  }, [])
+  
   const totalSteps = 12 // Total internal steps across all pages: 1 + 3 + 4 + 3 + 1 = 12
   const currentGlobalStep = 4 + currentStep // Dynamic global step: 5, 6, 7, 8 based on internal step
   const progress = (currentGlobalStep / totalSteps) * 100
@@ -56,8 +87,7 @@ export default function MakeItStandOutPage() {
   
   const handleNext = () => {
     if (currentStep < 4) { // Internal steps within this page (1-4)
-      setCurrentStep(currentStep + 1)
-    } else {
+      setCurrentStep(currentStep + 1)    } else {
       // Save all setup data to localStorage before moving to next page
       const setupData = {
         photos,
@@ -67,8 +97,66 @@ export default function MakeItStandOutPage() {
         pricing,
         timestamp: Date.now()
       }
-      localStorage.setItem('kostra_host_setup', JSON.stringify(setupData))
-      window.location.href = "/host/setup/ready"
+      
+      try {
+        const dataString = JSON.stringify(setupData)
+        
+        // Check if the data is too large for localStorage (approximate check)
+        const dataSize = new Blob([dataString]).size
+        const maxSize = 4 * 1024 * 1024 // 4MB safety limit
+        
+        if (dataSize > maxSize) {
+          // If data is too large, reduce photo quality or count
+          console.warn('Data too large for localStorage, reducing photo quality...')
+          
+          // Reduce photos to essential ones only (first 3)
+          const reducedSetupData = {
+            ...setupData,
+            photos: photos.slice(0, 3)
+          }
+          
+          localStorage.setItem('host_setup_standout_data', JSON.stringify(reducedSetupData))
+          console.log('Saved reduced standout data to localStorage:', reducedSetupData)
+          
+          // Notify user about photo reduction
+          alert('Due to storage limitations, only the first 3 photos were saved. You can add more photos later.')
+        } else {
+          localStorage.setItem('host_setup_standout_data', dataString)
+          console.log('Saved standout data to localStorage:', setupData)
+        }
+        
+        window.location.href = "/host/setup/publish"
+      } catch (error) {
+        console.error('Error saving to localStorage:', error)
+        
+        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+          // Handle quota exceeded error
+          alert('Storage quota exceeded. Please try uploading fewer or smaller images.')
+          
+          // Try to save with minimal data
+          try {
+            const minimalData = {
+              photos: photos.slice(0, 1), // Only keep first photo
+              title,
+              description,
+              selectedAmenities,
+              pricing,
+              timestamp: Date.now()
+            }
+            localStorage.setItem('host_setup_standout_data', JSON.stringify(minimalData))
+            console.log('Saved minimal standout data to localStorage:', minimalData)
+            
+            if (confirm('Only minimal data could be saved due to storage limits. Continue anyway?')) {
+              window.location.href = "/host/setup/publish"
+            }
+          } catch (secondError) {
+            console.error('Failed to save even minimal data:', secondError)
+            alert('Unable to save setup data. Please try refreshing the page and uploading smaller images.')
+          }
+        } else {
+          alert('An error occurred while saving your setup data. Please try again.')
+        }
+      }
     }
   }
 
@@ -83,7 +171,54 @@ export default function MakeItStandOutPage() {
     setSelectedAmenities((prev) =>
       prev.includes(amenityId) ? prev.filter((id) => id !== amenityId) : [...prev, amenityId],
     )
+  }  // Function to compress and resize images
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = document.createElement('img')
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 800x600 for efficiency)
+        const maxWidth = 800
+        const maxHeight = 600
+        let { width, height } = img
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw and compress the image
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        // Convert to base64 with compression (0.7 quality for JPEG)
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7)
+        
+        // Clean up the object URL
+        URL.revokeObjectURL(img.src)
+        resolve(compressedDataUrl)
+      }
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src)
+        reject(new Error('Failed to load image'))
+      }
+      
+      img.src = URL.createObjectURL(file)
+    })
   }
+
   const handlePhotoUpload = () => {
     // Create a hidden file input element
     const input = document.createElement('input')
@@ -92,7 +227,7 @@ export default function MakeItStandOutPage() {
     input.multiple = true
     input.style.display = 'none'
     
-    input.onchange = (event) => {
+    input.onchange = async (event) => {
       const files = (event.target as HTMLInputElement).files
       if (files) {
         const remainingSlots = 5 - photos.length
@@ -113,14 +248,16 @@ export default function MakeItStandOutPage() {
         
         const filesToProcess = validFiles.slice(0, remainingSlots)
         
-        filesToProcess.forEach((file) => {
-          const reader = new FileReader()
-          reader.onload = (e) => {
-            const result = e.target?.result as string
-            setPhotos(prev => [...prev, result])
+        // Process files sequentially to avoid memory issues
+        for (const file of filesToProcess) {
+          try {
+            const compressedImage = await compressImage(file)
+            setPhotos(prev => [...prev, compressedImage])
+          } catch (error) {
+            console.error('Error compressing image:', error)
+            alert(`Failed to process ${file.name}. Please try again.`)
           }
-          reader.readAsDataURL(file)
-        })
+        }
         
         // Show a message if user tried to upload more than allowed
         if (validFiles.length > remainingSlots) {
@@ -214,7 +351,12 @@ export default function MakeItStandOutPage() {
                         className="mt-2"
                         maxLength={50}
                       />
-                      <p className="text-sm text-gray-500 mt-1">{title.length}/50 characters</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {title.length}/50 characters
+                        {title.length > 0 && title.length < 5 && (
+                          <span className="text-red-500 ml-2">• Minimum 5 characters required</span>
+                        )}
+                      </p>
                     </div>
 
                     <div>
@@ -228,7 +370,12 @@ export default function MakeItStandOutPage() {
                         rows={6}
                         maxLength={500}
                       />
-                      <p className="text-sm text-gray-500 mt-1">{description.length}/500 characters</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {description.length}/500 characters
+                        {description.length > 0 && description.length < 10 && (
+                          <span className="text-red-500 ml-2">• Minimum 10 characters required</span>
+                        )}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -408,10 +555,9 @@ export default function MakeItStandOutPage() {
             </Button>
 
             <Button
-              onClick={handleNext}
-              disabled={
+              onClick={handleNext}              disabled={
                 (currentStep === 1 && photos.length === 0) ||
-                (currentStep === 2 && (!title || !description)) ||
+                (currentStep === 2 && (!title || title.length < 5 || !description || description.length < 10)) ||
                 (currentStep === 4 && !pricing.basePrice)
               }
               className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -24,6 +24,26 @@ export default function TellUsAboutPlacePage() {
     city: "",
     province: "",  })
   
+  // Save place data to localStorage whenever it changes
+  useEffect(() => {
+    const placeData = {
+      location: {
+        address: location.address,
+        city: location.city,
+        state: location.province, // Map province to state for backend
+        country: location.country,
+        zipCode: "" // Add empty zipCode as backend expects it
+      },
+      guestCounts,
+      timestamp: Date.now()
+    }
+    
+    if (location.address || location.city) { // Only save if we have some location data
+      localStorage.setItem('host_setup_place_data', JSON.stringify(placeData))
+      console.log('Saved place data to localStorage:', placeData)
+    }
+  }, [location, guestCounts])
+
   const totalSteps = 12 // Total internal steps across all pages: 1 + 3 + 4 + 3 + 1 = 12
   const currentGlobalStep = 1 + currentStep // Dynamic global step: 2, 3, 4 based on internal step
   const progress = (currentGlobalStep / totalSteps) * 100
