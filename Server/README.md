@@ -26,30 +26,8 @@ A comprehensive REST API backend for the Kostra property rental platform built w
 - **Email**: Nodemailer
 - **Deployment**: Vercel
 
-## Project Structure
 
-```
-src/
-├── config/
-│   └── database.js          # Database configuration
-├── middleware/
-│   ├── auth.js             # Authentication middleware
-│   ├── errorHandler.js     # Global error handler
-│   └── notFound.js         # 404 handler
-├── routes/
-│   ├── auth.js             # Authentication routes
-│   ├── properties.js       # Property management
-│   ├── bookings.js         # Booking management
-│   ├── reviews.js          # Review system
-│   ├── users.js            # User management
-│   ├── company.js          # Company information
-│   ├── careers.js          # Job listings
-│   ├── referrals.js        # Referral system
-│   └── safety.js           # Safety & trust
-└── server.js               # Main server file
-```
-
-## Installation
+## Local Project Installation:
 
 1. **Clone the repository**
    ```bash
@@ -172,7 +150,7 @@ src/
 - **Helmet**: Security headers
 - **SQL Injection Protection**: Parameterized queries with Knex
 
-## Deployment
+## project Deployment
 
 ### Vercel Deployment
 
@@ -225,31 +203,7 @@ npm run seed
 npm test
 ```
 
-## Environment Variables
 
-Required environment variables:
-
-```env
-NODE_ENV=development
-PORT=5000
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=kostra_db
-DB_USER=your_username
-DB_PASSWORD=your_password
-DATABASE_URL=postgresql://user:password@host:port/database
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRE=7d
-FRONTEND_URL=http://localhost:3000
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## License
 
