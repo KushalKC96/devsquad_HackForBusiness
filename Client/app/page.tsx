@@ -145,10 +145,9 @@ export default function KostraHomepage() {
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">            <div>
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                {language === "np" ? "संसारका उत्तम गन्तव्यहरू अन्वेषण गर्नुहोस्" : "Explore the world's best destinations"}
+                {language === "np" ? "नेपालका लागि भाडा पुनः कल्पना गरिएको" : "Renting Reimagined For Nepal"}
               </h1>
               <p className="text-xl text-gray-600 mb-8">
                 {language === "np"
